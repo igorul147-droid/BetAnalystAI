@@ -126,17 +126,16 @@ export function getProviderStatusMessage(message?: string) {
 }
 
 export async function fetchMatchesFromProvider(query?: string): Promise<FootballMatch[]> {
-  const apiKey = process.env.API_FOOTBALL_KEY?.trim() || process.env.API_SPORTS_KEY?.trim() || process.env.FOOTBALL_DATA_API_KEY?.trim();
+  const apiKey = process.env.API_SPORTS_KEY?.trim() || process.env.API_FOOTBALL_KEY?.trim() || process.env.FOOTBALL_DATA_API_KEY?.trim();
 
   if (!apiKey) {
     return [];
   }
 
   try {
-    const response = await fetch("https://api-football-v1.p.rapidapi.com/v3/fixtures?live=all", {
+    const response = await fetch("https://v3.football.api-sports.io/fixtures?live=all", {
       headers: {
-        "x-rapidapi-key": apiKey,
-        "x-rapidapi-host": "api-football-v1.p.rapidapi.com",
+        "x-apisports-key": apiKey,
       },
       next: { revalidate: 60 },
     });
