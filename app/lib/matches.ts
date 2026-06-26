@@ -6,7 +6,7 @@ export type FootballMatch = {
   homeTeam: string;
   awayTeam: string;
   venue: string;
-  source: "demo" | "api";
+  source: "cached" | "api";
   odds: {
     home: number;
     draw: number;
@@ -24,7 +24,7 @@ export type FootballMatch = {
   };
 };
 
-const demoMatches: FootballMatch[] = [
+const cachedMatches: FootballMatch[] = [
   {
     id: "flamengo-palmeiras",
     league: "Brasileirão Série A",
@@ -33,7 +33,7 @@ const demoMatches: FootballMatch[] = [
     homeTeam: "Flamengo",
     awayTeam: "Palmeiras",
     venue: "Maracanã",
-    source: "demo",
+    source: "cached",
     odds: { home: 2.18, draw: 3.12, away: 3.35, over15: 1.36, bothTeamsScore: 1.82 },
     stats: { homeForm: 7.6, awayForm: 7.1, avgGoals: 2.4, shotsOnTarget: 9.1, corners: 10.2, cards: 4.8 },
   },
@@ -45,7 +45,7 @@ const demoMatches: FootballMatch[] = [
     homeTeam: "Real Madrid",
     awayTeam: "Barcelona",
     venue: "Santiago Bernabéu",
-    source: "demo",
+    source: "cached",
     odds: { home: 2.04, draw: 3.55, away: 3.28, over15: 1.25, bothTeamsScore: 1.58 },
     stats: { homeForm: 8.2, awayForm: 7.8, avgGoals: 3.1, shotsOnTarget: 11.4, corners: 9.6, cards: 5.2 },
   },
@@ -57,7 +57,7 @@ const demoMatches: FootballMatch[] = [
     homeTeam: "Manchester City",
     awayTeam: "Liverpool",
     venue: "Etihad Stadium",
-    source: "demo",
+    source: "cached",
     odds: { home: 1.92, draw: 3.7, away: 3.65, over15: 1.28, bothTeamsScore: 1.61 },
     stats: { homeForm: 8.4, awayForm: 7.7, avgGoals: 3.0, shotsOnTarget: 12.1, corners: 10.8, cards: 3.9 },
   },
@@ -69,13 +69,13 @@ const demoMatches: FootballMatch[] = [
     homeTeam: "Suíça",
     awayTeam: "Bósnia",
     venue: "St. Jakob-Park",
-    source: "demo",
+    source: "cached",
     odds: { home: 1.74, draw: 3.5, away: 4.8, over15: 1.42, bothTeamsScore: 1.96 },
     stats: { homeForm: 7.3, awayForm: 6.2, avgGoals: 2.1, shotsOnTarget: 7.8, corners: 8.9, cards: 4.4 },
   },
 ];
 
-export const footballMatches: FootballMatch[] = demoMatches;
+export const footballMatches: FootballMatch[] = cachedMatches;
 
 export const getMatchName = (match: FootballMatch) =>
   `${match.homeTeam} x ${match.awayTeam}`;

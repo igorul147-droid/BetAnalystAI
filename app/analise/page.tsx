@@ -84,7 +84,7 @@ export default async function AnalysisPage({ searchParams }: AnalysisPageProps) 
                 Jogo analisado
               </p>
               <span className="rounded-md border border-amber-300/30 bg-amber-300/10 px-3 py-1 text-xs font-semibold uppercase text-amber-200">
-                {analysis.dataSource === "api" ? "Dados reais" : analysis.dataSource === "demo" ? "Base demo" : "Entrada manual"}
+                {analysis.dataSource === "api" ? "Dados reais" : analysis.dataSource === "cached" ? "Dados em cache" : "Entrada manual"}
               </span>
             </div>
             <h1 className="mt-3 text-3xl font-semibold tracking-tight text-white">
