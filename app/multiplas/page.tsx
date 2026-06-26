@@ -1,61 +1,46 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { footballMatches, getMatchName } from "../lib/matches";
-import { buildMultipleAssessment, buildMultipleLegFromMatch, type MultipleLeg } from "../lib/multiples";
+import { useState } from "react";
+import { footballMatches, getMatchName, searchMatches } from "../lib/matches";
+
+type SelectedMatch = {
+  id: string;
+  name: string;
+};
 
 const inputBase =
   "w-full rounded-lg border border-white/10 bg-black/50 px-3 py-2 text-sm text-neutral-50 outline-none transition focus:border-emerald-300";
 
-const marketOptions = [
-  { label: "Casa", value: "Casa" },
-  { label: "Empate", value: "Empate" },
-  { label: "Fora", value: "Fora" },
-  { label: "Over 1.5", value: "Over 1.5" },
-  { label: "Ambas marcam", value: "Ambas marcam" },
-  { label: "Over 2.5", value: "Over 2.5" },
-];
-
 export default function MultiplesPage() {
-  const [legs, setLegs] = useState<MultipleLeg[]>([]);
-  const [selectedMatchId, setSelectedMatchId] = useState<string>("");
-  const [selectedMarket, setSelectedMarket] = useState<string>("Casa");
+  const [selectedMatches, setSelectedMatches] = useState<SelectedMatch[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [searchResults, setSearchResults] = useState(footballMatches);
 
-  const selectedMatch = footballMatches.find((m) => m.id === selectedMatchId);
-
-  const assessment = useMemo(() => buildMultipleAssessment(legs), [legs]);
-
-  const updateLeg = (id: string, field: keyof MultipleLeg, value: string) => {
-    setLegs((current) =>
-      current.map((leg) => {
-        if (leg.id !== id) {
-          return leg;
-        }
-
-        if (field === "odd" || field === "estimatedProbability") {
-          return { ...leg, [field]: Number(value) };
-        }
-
-        return { ...leg, [field]: value };
-      })
-    );
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+    if (query.trim()) {
+      const results = searchMatches(query);
+      setSearchResults(results);
+    } else {
+      setSearchResults(footballMatches);
+    }
   };
 
-  const addLeg = () => {
-    if (!selectedMatch) return;
-
-    setLegs((current) => [
-      ...current,
-      buildMultipleLegFromMatch(selectedMatch, selectedMarket),
-    ]);
-
-    setSelectedMatchId("");
-    setSelectedMarket("Casa");
+  const addMatch = (match: typeof footballMatches[0]) => {
+    if (!selectedMatches.find((m) => m.id === match.id)) {
+      setSelectedMatches([...selectedMatches, { id: match.id, name: getMatchName(match) }]);
+    }
+    setSearchQuery("");
+    setSearchResults(footballMatches);
   };
 
-  const removeLeg = (id: string) => {
-    setLegs((current) => current.filter((leg) => leg.id !== id));
+  const removeMatch = (id: string) => {
+    setSelectedMatches((current) => current.filter((m) => m.id !== id));
+  };
+
+  const getSelectedMatchDetails = (id: string) => {
+    return footballMatches.find((m) => m.id === id);
   };
 
   return (
@@ -82,183 +67,210 @@ export default function MultiplesPage() {
           </nav>
         </header>
 
-        <section className="grid gap-6 lg:grid-cols-[0.95fr_1.05fr]">
+        <section className="grid gap-6 lg:grid-cols-[1fr_1fr]">
           <div className="rounded-lg border border-white/10 bg-neutral-950/80 p-6 shadow-2xl shadow-black/20">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-semibold uppercase text-emerald-300">Construtor</p>
+                <p className="text-sm font-semibold uppercase text-emerald-300">Análise</p>
                 <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white">
-                  Múltipla inteligente
+                  Comparador de jogos
                 </h1>
               </div>
-              <span className="rounded-md border border-amber-300/30 bg-amber-300/10 px-3 py-1 text-xs font-semibold uppercase text-amber-200">
-                Gestão de risco
+              <span className="rounded-md border border-blue-300/30 bg-blue-300/10 px-3 py-1 text-xs font-semibold uppercase text-blue-200">
+                Estatísticas essenciais
               </span>
             </div>
 
-            {/* Seletor de Perna */}
+            {/* Buscador de Partidas */}
             <div className="mt-6 rounded-lg border border-white/10 bg-black/40 p-4">
-              <p className="mb-4 text-sm font-semibold text-white">Adicionar perna</p>
-              
-              <div className="grid gap-3 md:grid-cols-2">
-                <label className="text-sm text-neutral-300">
-                  <span className="mb-1 block">Partida</span>
-                  <select
-                    value={selectedMatchId}
-                    onChange={(e) => setSelectedMatchId(e.target.value)}
-                    className={inputBase}
-                  >
-                    <option value="">Selecione uma partida...</option>
-                    {footballMatches.map((match) => (
-                      <option key={match.id} value={match.id}>
-                        {getMatchName(match)} - {match.league}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+              <label className="text-sm text-neutral-300">
+                <span className="mb-2 block font-semibold">Buscar partida</span>
+                <input
+                  type="text"
+                  placeholder="Ex: Flamengo, Liverpool, Barcelona..."
+                  value={searchQuery}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  className={inputBase}
+                />
+              </label>
 
-                <label className="text-sm text-neutral-300">
-                  <span className="mb-1 block">Mercado</span>
-                  <select
-                    value={selectedMarket}
-                    onChange={(e) => setSelectedMarket(e.target.value)}
-                    className={inputBase}
-                  >
-                    {marketOptions.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-
-              {/* Estatísticas da Partida Selecionada */}
-              {selectedMatch && (
-                <div className="mt-4 rounded-lg border border-emerald-300/20 bg-emerald-300/5 p-3">
-                  <p className="mb-3 text-xs font-semibold uppercase text-emerald-200">Estatísticas essenciais</p>
-                  <div className="grid gap-2 text-xs sm:grid-cols-2 md:grid-cols-3">
-                    <div>
-                      <p className="text-neutral-400">Gols médios</p>
-                      <p className="font-semibold text-white">{selectedMatch.stats.avgGoals}</p>
-                    </div>
-                    <div>
-                      <p className="text-neutral-400">Cartões</p>
-                      <p className="font-semibold text-white">{selectedMatch.stats.cards}</p>
-                    </div>
-                    <div>
-                      <p className="text-neutral-400">Escanteios</p>
-                      <p className="font-semibold text-white">{selectedMatch.stats.corners}</p>
-                    </div>
-                    <div>
-                      <p className="text-neutral-400">Chutes ao gol</p>
-                      <p className="font-semibold text-white">{selectedMatch.stats.shotsOnTarget}</p>
-                    </div>
-                  </div>
+              {/* Resultados da Busca */}
+              {searchQuery && searchResults.length > 0 && (
+                <div className="mt-3 max-h-48 overflow-y-auto space-y-2 rounded-lg border border-emerald-300/20 bg-emerald-300/5 p-3">
+                  {searchResults.map((match) => (
+                    <button
+                      key={match.id}
+                      onClick={() => addMatch(match)}
+                      className="w-full text-left rounded-lg border border-white/10 bg-black/40 px-3 py-2 text-sm text-neutral-300 transition hover:bg-emerald-400/20 hover:border-emerald-400/50"
+                    >
+                      <p className="font-semibold text-white">{getMatchName(match)}</p>
+                      <p className="text-xs text-neutral-500">{match.league} • {match.country}</p>
+                    </button>
+                  ))}
                 </div>
               )}
-
-              <button
-                onClick={addLeg}
-                disabled={!selectedMatch}
-                className="mt-4 w-full min-h-11 rounded-lg border border-emerald-400/30 bg-emerald-400/10 px-4 text-sm font-semibold text-emerald-200 transition hover:bg-emerald-400/20 disabled:border-neutral-600 disabled:bg-neutral-900/50 disabled:text-neutral-500"
-              >
-                + Adicionar perna
-              </button>
             </div>
 
-            {/* Pernas Adicionadas */}
-            {legs.length > 0 && (
+            {/* Partidas Selecionadas */}
+            {selectedMatches.length > 0 && (
               <div className="mt-6 space-y-3">
-                <p className="text-xs font-semibold uppercase text-neutral-400">Pernas selecionadas ({legs.length})</p>
-                {legs.map((leg, index) => (
-                  <div key={leg.id} className="rounded-lg border border-white/10 bg-black/40 p-4">
-                    <div className="mb-3 flex items-center justify-between">
-                      <p className="text-sm font-semibold text-white">Perna {index + 1}</p>
-                      <button
-                        onClick={() => removeLeg(leg.id)}
-                        className="text-xs text-neutral-400 hover:text-red-400 transition"
-                      >
-                        Remover
-                      </button>
-                    </div>
-                    <div className="mb-3 grid gap-2 text-xs">
-                      <div>
-                        <p className="text-neutral-400">{leg.matchLabel}</p>
-                        <p className="font-semibold text-white">{leg.marketLabel}</p>
+                <p className="text-xs font-semibold uppercase text-neutral-400">Partidas em análise ({selectedMatches.length})</p>
+                {selectedMatches.map((match, index) => {
+                  const details = getSelectedMatchDetails(match.id);
+                  if (!details) return null;
+
+                  return (
+                    <div key={match.id} className="rounded-lg border border-white/10 bg-black/40 p-4">
+                      <div className="mb-3 flex items-center justify-between">
+                        <div>
+                          <p className="font-semibold text-white">{match.name}</p>
+                          <p className="text-xs text-neutral-500">{details.league} • {details.country}</p>
+                        </div>
+                        <button
+                          onClick={() => removeMatch(match.id)}
+                          className="text-xs text-neutral-400 hover:text-red-400 transition"
+                        >
+                          Remover
+                        </button>
+                      </div>
+
+                      <div className="grid gap-3 grid-cols-2 text-xs">
+                        <div className="rounded-lg border border-white/5 bg-black/50 p-3">
+                          <p className="text-neutral-500">Gols médios</p>
+                          <p className="mt-1 text-lg font-semibold text-white">{details.stats.avgGoals}</p>
+                        </div>
+                        <div className="rounded-lg border border-white/5 bg-black/50 p-3">
+                          <p className="text-neutral-500">Cartões</p>
+                          <p className="mt-1 text-lg font-semibold text-white">{details.stats.cards}</p>
+                        </div>
+                        <div className="rounded-lg border border-white/5 bg-black/50 p-3">
+                          <p className="text-neutral-500">Escanteios</p>
+                          <p className="mt-1 text-lg font-semibold text-white">{details.stats.corners}</p>
+                        </div>
+                        <div className="rounded-lg border border-white/5 bg-black/50 p-3">
+                          <p className="text-neutral-500">Chutes ao gol</p>
+                          <p className="mt-1 text-lg font-semibold text-white">{details.stats.shotsOnTarget}</p>
+                        </div>
+                      </div>
+
+                      {/* Detalhes do Jogo */}
+                      <div className="mt-3 pt-3 border-t border-white/10 text-xs">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <p className="text-neutral-500">Horário</p>
+                            <p className="font-semibold text-white">{new Date(details.startsAt).toLocaleString("pt-BR")}</p>
+                          </div>
+                          <div>
+                            <p className="text-neutral-500">Local</p>
+                            <p className="font-semibold text-white">{details.venue}</p>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <div className="grid gap-3 md:grid-cols-2">
-                      <label className="text-sm text-neutral-300">
-                        <span className="mb-1 block">Odd</span>
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={leg.odd}
-                          onChange={(event) => updateLeg(leg.id, "odd", event.target.value)}
-                          className={inputBase}
-                        />
-                      </label>
-                      <label className="text-sm text-neutral-300">
-                        <span className="mb-1 block">Prob. estimada</span>
-                        <input
-                          type="number"
-                          step="0.01"
-                          value={leg.estimatedProbability}
-                          onChange={(event) => updateLeg(leg.id, "estimatedProbability", event.target.value)}
-                          className={inputBase}
-                        />
-                      </label>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
 
           <div className="rounded-lg border border-white/10 bg-neutral-950/80 p-6">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-xl font-semibold text-white">Resumo do bilhete</h2>
-              {legs.length > 0 && (
-                <span className="rounded-md border border-emerald-300/30 bg-emerald-300/10 px-3 py-1 text-xs font-semibold uppercase text-emerald-200">
-                  {assessment.valueLabel}
-                </span>
-              )}
-            </div>
+            <h2 className="text-xl font-semibold text-white">Resumo da análise</h2>
 
-            {legs.length === 0 ? (
+            {selectedMatches.length === 0 ? (
               <div className="mt-6 rounded-lg border border-white/10 bg-black/40 p-8 text-center">
                 <p className="text-sm text-neutral-400">
-                  Adicione pernas à esquerda para começar a construir sua múltipla.
+                  Busque e adicione partidas à esquerda para ver uma análise comparativa das estatísticas.
                 </p>
               </div>
             ) : (
               <>
-                <div className="mt-6 grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-lg border border-white/10 bg-black/40 p-4">
-                    <p className="text-xs text-neutral-500">Odd combinada</p>
-                    <p className="mt-2 text-2xl font-semibold text-white">{assessment.combinedOdd}</p>
-                  </div>
-                  <div className="rounded-lg border border-white/10 bg-black/40 p-4">
-                    <p className="text-xs text-neutral-500">Probabilidade estimada</p>
-                    <p className="mt-2 text-2xl font-semibold text-white">{assessment.combinedProbability}</p>
-                  </div>
-                  <div className="rounded-lg border border-white/10 bg-black/40 p-4">
-                    <p className="text-xs text-neutral-500">Probabilidade implícita</p>
-                    <p className="mt-2 text-2xl font-semibold text-white">{assessment.impliedProbability}</p>
-                  </div>
-                  <div className="rounded-lg border border-white/10 bg-black/40 p-4">
-                    <p className="text-xs text-neutral-500">Risco</p>
-                    <p className="mt-2 text-2xl font-semibold text-white">{assessment.riskLevel}</p>
+                {/* Estatísticas Agregadas */}
+                <div className="mt-6 rounded-lg border border-blue-300/20 bg-blue-300/5 p-4">
+                  <p className="mb-4 text-xs font-semibold uppercase text-blue-200">Médias das partidas selecionadas</p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-lg border border-white/10 bg-black/40 p-3">
+                      <p className="text-xs text-neutral-500">Gols médios</p>
+                      <p className="mt-2 text-2xl font-semibold text-white">
+                        {(
+                          selectedMatches.reduce((acc, m) => {
+                            const details = getSelectedMatchDetails(m.id);
+                            return acc + (details?.stats.avgGoals || 0);
+                          }, 0) / selectedMatches.length
+                        ).toFixed(1)}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-white/10 bg-black/40 p-3">
+                      <p className="text-xs text-neutral-500">Cartões médios</p>
+                      <p className="mt-2 text-2xl font-semibold text-white">
+                        {(
+                          selectedMatches.reduce((acc, m) => {
+                            const details = getSelectedMatchDetails(m.id);
+                            return acc + (details?.stats.cards || 0);
+                          }, 0) / selectedMatches.length
+                        ).toFixed(1)}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-white/10 bg-black/40 p-3">
+                      <p className="text-xs text-neutral-500">Escanteios médios</p>
+                      <p className="mt-2 text-2xl font-semibold text-white">
+                        {(
+                          selectedMatches.reduce((acc, m) => {
+                            const details = getSelectedMatchDetails(m.id);
+                            return acc + (details?.stats.corners || 0);
+                          }, 0) / selectedMatches.length
+                        ).toFixed(1)}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-white/10 bg-black/40 p-3">
+                      <p className="text-xs text-neutral-500">Chutes ao gol médios</p>
+                      <p className="mt-2 text-2xl font-semibold text-white">
+                        {(
+                          selectedMatches.reduce((acc, m) => {
+                            const details = getSelectedMatchDetails(m.id);
+                            return acc + (details?.stats.shotsOnTarget || 0);
+                          }, 0) / selectedMatches.length
+                        ).toFixed(1)}
+                      </p>
+                    </div>
                   </div>
                 </div>
 
+                {/* Insights */}
                 <div className="mt-6 rounded-lg border border-white/10 bg-white/[0.03] p-5">
-                  <h3 className="font-semibold text-white">Observações</h3>
+                  <h3 className="font-semibold text-white">Insights das partidas</h3>
                   <ul className="mt-3 space-y-3 text-sm leading-6 text-neutral-300">
-                    {assessment.notes.map((note) => (
-                      <li key={note}>• {note}</li>
-                    ))}
+                    <li>
+                      • <span className="font-semibold text-emerald-200">
+                        {selectedMatches.length} partida{selectedMatches.length > 1 ? "s" : ""} em análise
+                      </span>
+                    </li>
+                    <li>
+                      • Gols: foco em jogos com média de{" "}
+                      <span className="font-semibold text-white">
+                        {(
+                          selectedMatches.reduce((acc, m) => {
+                            const details = getSelectedMatchDetails(m.id);
+                            return acc + (details?.stats.avgGoals || 0);
+                          }, 0) / selectedMatches.length
+                        ).toFixed(1)}
+                      </span>{" "}
+                      gols
+                    </li>
+                    <li>
+                      • Disciplina: expectativa de{" "}
+                      <span className="font-semibold text-white">
+                        {(
+                          selectedMatches.reduce((acc, m) => {
+                            const details = getSelectedMatchDetails(m.id);
+                            return acc + (details?.stats.cards || 0);
+                          }, 0) / selectedMatches.length
+                        ).toFixed(1)}
+                      </span>{" "}
+                      cartões por jogo
+                    </li>
+                    <li>
+                      • Controle: escanteios e chutes refletem intensidade tática dos confrontos
+                    </li>
                   </ul>
                 </div>
               </>
